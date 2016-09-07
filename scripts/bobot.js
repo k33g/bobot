@@ -1,44 +1,34 @@
 // Description:
 //   BoB = Bot Operative Behaviour
 
+
 "use strict";
 // TODO: add config file
-var GitHubClient = require('./GitHubClient.js').GitHubClient;
-var githubCli = new GitHubClient({
+const VerEx = require('verbal-expressions');
+
+const GitHubClient = require('./GitHubClient.js').GitHubClient;
+let githubCli = new GitHubClient({
   baseUri: "http://github.at.home/api/v3",
   token:process.env.TOKEN_GHE_27_K33G
 })
 
-function checkIfString(str) {
-  return {
-    contains: (subStr) => new RegExp( '\\b' + subStr + '\\b', 'i').test(str)
-  };
-}
+const words = require('./words.js')
 
-function getLastWordOf(str) {
-  return str.split(" ").splice(-1)[0];
-}
-function getBeforeLastWordOf(str) {
-  return str.split(" ").splice(-1)[0];
-}
 
 module.exports =  (robot) =>  {
 
-  //console.log(robot)
-
   robot.on("plop", (data) =>{
-    console.log("====>>>",data)
-    //res.send("yo! :wink:");
-
+    console.log("Hey 👏",data)
   })
-
-
   robot.emit("plop",42)
 
-  //robot.brain.emit('.....')
-
-
-
+  // Get rooms id: https://slack.com/api/channels.list?token=HUBOT_SLACK_TOKEN
+  robot.messageRoom('C278BQHRV', 'Hello :earth_africa:')
+  /*
+  - "id":"C278BQHRV","name":"general"
+  - "id":"C279GEGER","name":"ops"
+  - "id":"C278CLABB","name":"random"
+  */
 
   robot.hear(/bob/, (res) => {
     let cmd = res.envelope.message.text;
@@ -48,8 +38,15 @@ module.exports =  (robot) =>  {
       if (cmd=="bob") {
         res.send("What?");
       }
-      if (checkIfString(cmd).contains("user")) {
-        let user = getLastWordOf(cmd)
+      if (words.testIfHelpMeKeyWord(cmd)) {
+        res.send("=== HELP ===");
+      }
+      // get informations about a user
+      if (words.testIfUserKeyWord(cmd)) {
+        let user = words.getStringAfterUser(cmd)
+
+        //console.log("-->",user)
+
         githubCli.fetchUser({handle:user}).then(user => {
           //console.log(user);
           let message = [
@@ -68,9 +65,9 @@ module.exports =  (robot) =>  {
           console.log("error", error)
         })
       }
-
-      if (checkIfString(cmd).contains("suspend")) { // il faudrait vérifier que c'est un mot
-        let user = getLastWordOf(cmd)
+      // suspend a user
+      if (words.testIfSuspendKeyWord(cmd)) {
+        let user = words.getStringAfterSuspend(cmd)
         githubCli.suspendUser({handle:user}).then(data => {
           console.log(data);
           res.send(`${user} suspended!`);
@@ -79,9 +76,9 @@ module.exports =  (robot) =>  {
           console.log("error", error)
         })
       }
-
-      if (checkIfString(cmd).contains("unsuspend")) {
-        let user = getLastWordOf(cmd)
+      // unsuspend a user
+      if (words.testIfUnsuspendKeyWord(cmd)) {
+        let user = words.getStringAfterUnsuspend(cmd)
         githubCli.unsuspendUser({handle:user}).then(data => {
           console.log(data);
           res.send(`${user} unsuspended!`);
@@ -91,13 +88,13 @@ module.exports =  (robot) =>  {
         })
       }
 
-
-      if (checkIfString(cmd).contains("create") && checkIfString(cmd).contains("repo")) {
-        let repoName = getLastWordOf(cmd)
+      // create a repository
+      if (words.testIfCreateRepoKeyWords(cmd)) {
+        let repoName = words.getStringAfterRepo(cmd)
 
         githubCli.createPublicRepository({name:repoName, description:"TBD"})
           .then(repo => {
-            console.log(repo)
+            //console.log(repo)
             res.send(repo.html_url);
           }).catch(error => {
             res.send("No way!!! :rage:");
@@ -107,13 +104,13 @@ module.exports =  (robot) =>  {
 
       }
 
-      if (checkIfString(cmd).contains("create") && checkIfString(cmd).contains("orgarepo")) {
-        let repoName = getLastWordOf(cmd)
-        let repoOrga = getBeforeLastWordOf(cmd)
+      if (words.testIfCreateOrgaRepoKeyWordsAnd2WordsAfter(cmd)) {
+        let repoName = words.getRepoNameAndOrgaName(cmd)[0]
+        let repoOrga = words.getRepoNameAndOrgaName(cmd)[1]
 
         githubCli.createPublicOrganizationRepository({name:repoName, description:"TBD", organization:repoOrga})
           .then(repo => {
-            console.log(repo)
+            //console.log(repo)
             res.send(repo.html_url);
           }).catch(error => {
             res.send("No way!!! :rage:");
@@ -125,7 +122,7 @@ module.exports =  (robot) =>  {
 
 
     } catch(err) {
-      res.send("Huston? We've got a problem");
+      res.send("Huston? We've got a problem :scream:");
     } finally {
 
     }
@@ -134,21 +131,7 @@ module.exports =  (robot) =>  {
 
   });
 
-  robot.hear(/k33g\?/, (res) => {
 
-    //var githubCli = getCli()
-    githubCli.fetchUser({handle:'k33g'}).then(user => {
-      console.log(user);
-      res.send(user.login + " " + user.avatar_url);
-      res.send(`blog: ${user.blog}`);
-      res.send(`email: ${user.email}`);
-
-
-    }).catch(error => {
-      console.log("error", error)
-    })
-
-  });
 
   robot.hear(/deploy/, (res) => {
     res.send("deploy what?");
