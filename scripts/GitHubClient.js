@@ -149,7 +149,10 @@ class GitHubClient {
       return response.data;
     });
   }
+  /*
+    Create a new repository in this organization. The authenticated user must be a member of the specified organization.
 
+  */
   createPublicOrganizationRepository({name, description, organization}) {
     return this.postData({path:`/orgs/${organization}/repos`, data:{
       name: name,
