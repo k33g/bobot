@@ -18,8 +18,7 @@
     "hubot-scripts": "^2.17.2",
     "hubot-shipit": "^0.2.0",
     "hubot-slack": "^4.0.2",
-    "node-fetch": "^1.6.0",
-    "verbal-expressions": "^0.2.1"
+    "node-fetch": "^1.6.0"
   },
   "engines": {
     "node": "0.10.x"
